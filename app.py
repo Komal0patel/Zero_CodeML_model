@@ -1,13 +1,15 @@
 import streamlit as st
 import os
 import pandas as pd
-
-
+from sklearn.linear_model import LinearRegression
+from sklearn.cluster import KMeans
+from sklearn.model_selection import train_test_split
 
 # Title
 st.title("📂 File Upload & Data Preview")
+
 # Layout: Sidebar + Main
-col1, col2 = st.columns([1,2])
+col1, col2 = st.columns([1, 2])
 
 with col1:
     st.markdown("### Upload Your Dataset")
@@ -37,3 +39,43 @@ with col2:
         
         data = load_data(uploaded_file)
         st.dataframe(data)
+        
+        # Model Selection
+        st.markdown("### Select Model Type")
+        model_type = st.selectbox("Choose a model:", ["Linear Regression", "Multiple Regression", "Clustering"])
+        
+        # Column Selection
+        st.markdown("### Select Columns for Processing")
+        columns = st.multiselect("Select feature columns:", data.columns)
+        target_column = None
+        if model_type in ["Linear Regression", "Multiple Regression"]:
+            target_column = st.selectbox("Select target column:", data.columns)
+        
+        # Process Data
+        if st.button("Run Model") and columns:
+            X = data[columns]
+            if model_type in ["Linear Regression", "Multiple Regression"] and target_column:
+                y = data[target_column]
+                X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+                print(X_train)
+                print(X_test)
+                print(y_train)
+                print(y_test)
+                if model_type == "Linear Regression":
+                    model = LinearRegression()
+                elif model_type == "Multiple Regression":
+                    model = LinearRegression()  # Multiple regression is handled similarly in sklearn
+                
+                model.fit(X_train, y_train)
+                predictions = model.predict(X_test)
+                
+                st.write("### Model Predictions:")
+                st.dataframe(pd.DataFrame({"Actual": y_test, "Predicted": predictions}))
+            
+            elif model_type == "Clustering":
+                k = st.slider("Select number of clusters:", min_value=2, max_value=10, value=3)
+                model = KMeans(n_clusters=k, random_state=42)
+                data["Cluster"] = model.fit_predict(X)
+                
+                st.write("### Clustered Data:")
+                st.dataframe(data)
